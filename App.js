@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
@@ -16,9 +16,8 @@ export default function App() {
     longitudeDelta: 0.04,
   };
 
-  const [region, setRegion] = useState(initialRegion);
-  const [activeMarkerIndex, setActiveMarkerIndex] = useState(0);
-
+  const [activeMarkerIndex, setActiveMarkerIndex] = useState(-1);
+  
   const mapRef = useRef(null);
   const scrollViewRef = useRef(null);
 
@@ -66,15 +65,15 @@ export default function App() {
   ];
 
   const navigateToLocation = (index) => {
-    const selectedPueblo = pueblosMagicos[index];
-    
     setActiveMarkerIndex(index);
+    
+    const selectedPueblo = pueblosMagicos[index];
     
     mapRef.current?.animateToRegion({
       latitude: selectedPueblo.coordinate.latitude,
       longitude: selectedPueblo.coordinate.longitude,
-      latitudeDelta: 0.04,
-      longitudeDelta: 0.04,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
     }, 1000);
     
     scrollViewRef.current?.scrollTo({
@@ -83,29 +82,48 @@ export default function App() {
     });
   };
 
-  useEffect(() => {
-    setActiveMarkerIndex(0);
-  }, []);
+  const navigateToCancun = () => {
+    setActiveMarkerIndex(-1);
+    
+    mapRef.current?.animateToRegion(initialRegion, 1000);
+  };
 
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={initialRegion}
       >
-        {/* Marcador inicial (Cancún) */}
+        {/* Marcador inicial (UT) */}
+        <Marker
+          coordinate={initialRegion}
+          title="UT Cancún"
+          description="Universidad Tecnológica de Cancún"
+          pinColor="#1E88E5"
+          onPress={navigateToCancun}
+        />
+
+        {/* Marcadores de Pueblos Mágicos */}
         {pueblosMagicos.map((pueblo, index) => (
           <Marker
             key={pueblo.id}
             coordinate={pueblo.coordinate}
             title={pueblo.title}
             description={pueblo.description}
-            pinColor={index === activeMarkerIndex ? '#FF0000' : '#3498db'}
+            pinColor={activeMarkerIndex === index ? '#FF0000' : '#3498db'}
             onPress={() => navigateToLocation(index)}
           />
         ))}
       </MapView>
+      
+      <TouchableOpacity
+        style={styles.cancunButton}
+        onPress={navigateToCancun}
+      >
+        <Text style={styles.cancunButtonText}>Volver a UT Cancún</Text>
+      </TouchableOpacity>
       
       <View style={styles.cardsContainer}>
         <ScrollView
@@ -120,7 +138,7 @@ export default function App() {
             const index = Math.round(
               event.nativeEvent.contentOffset.x / (CARD_WIDTH + SPACING)
             );
-            if (index >= 0 && index < pueblosMagicos.length && index !== activeMarkerIndex) {
+            if (index >= 0 && index < pueblosMagicos.length) {
               navigateToLocation(index);
             }
           }}
@@ -131,21 +149,22 @@ export default function App() {
               activeOpacity={0.8}
               style={[
                 styles.card,
-                index === activeMarkerIndex && styles.activeCard
+                activeMarkerIndex === index && styles.activeCard
               ]}
               onPress={() => navigateToLocation(index)}
             >
-              <Image source={{ uri: pueblo.image }} style={styles.cardImage} />
+              <Image 
+                source={{ uri: pueblo.image }} 
+                style={styles.cardImage} 
+                resizeMode="cover"
+              />
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{pueblo.title}</Text>
                 <Text style={styles.cardDescription}>{pueblo.description}</Text>
                 <TouchableOpacity 
                   style={styles.navigateButton}
                   activeOpacity={0.6}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    navigateToLocation(index);
-                  }}
+                  onPress={() => navigateToLocation(index)}
                 >
                   <Text style={styles.navigateButtonText}>Ver en el mapa</Text>
                 </TouchableOpacity>
@@ -167,6 +186,24 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  cancunButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    backgroundColor: '#1E88E5',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  cancunButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   cardsContainer: {
     position: 'absolute',
