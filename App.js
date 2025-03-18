@@ -10,8 +10,8 @@ const SPACING = 10;
 
 export default function App() {
   const initialRegion = {
-    latitude: 21.1619,
-    longitude: -86.8515,
+    latitude: 21.0500005,
+    longitude: -86.8456237,
     latitudeDelta: 0.04,
     longitudeDelta: 0.04,
   };
@@ -65,11 +65,9 @@ export default function App() {
     },
   ];
 
-  // Función para navegar al lugar seleccionado
   const navigateToLocation = (index) => {
     const selectedPueblo = pueblosMagicos[index];
 
-    // Animate map to new region
     mapRef.current?.animateToRegion({
       latitude: selectedPueblo.coordinate.latitude,
       longitude: selectedPueblo.coordinate.longitude,
@@ -79,7 +77,6 @@ export default function App() {
 
     setActiveMarkerIndex(index);
 
-    // Scroll to the selected card
     scrollViewRef.current?.scrollTo({
       x: index * (CARD_WIDTH + SPACING),
       animated: true,
