@@ -17,7 +17,6 @@ export default function App() {
   };
 
   const [activeMarkerIndex, setActiveMarkerIndex] = useState(-1);
-  
   const mapRef = useRef(null);
   const scrollViewRef = useRef(null);
 
@@ -26,65 +25,63 @@ export default function App() {
       id: '1',
       title: 'Valladolid',
       description: 'Ciudad colonial con coloridas calles y hermosos cenotes cercanos.',
-      coordinate: {
-        latitude: 20.6890,
-        longitude: -88.2000,
-      },
+      coordinate: { latitude: 20.6890, longitude: -88.2000 },
       image: 'https://images.pexels.com/photos/12256064/pexels-photo-12256064.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     },
     {
       id: '2',
       title: 'Izamal',
       description: 'La ciudad amarilla, famosa por su convento franciscano y sitios arqueológicos.',
-      coordinate: {
-        latitude: 20.9297,
-        longitude: -89.0214,
-      },
+      coordinate: { latitude: 20.9297, longitude: -89.0214 },
       image: 'https://images.pexels.com/photos/13828557/pexels-photo-13828557.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     },
     {
       id: '3',
       title: 'Maní',
       description: 'Pueblo histórico conocido por el auto de fe de 1562 y su excelente gastronomía.',
-      coordinate: {
-        latitude: 20.3867,
-        longitude: -89.3933,
-      },
+      coordinate: { latitude: 20.3867, longitude: -89.3933 },
       image: 'https://yucatan.travel/wp-content/uploads/2024/05/Mani%CC%81-D-1920x1080-crop.jpg',
     },
     {
       id: '4',
       title: 'Sisal',
       description: 'Puerto histórico con hermosas playas y rica biodiversidad.',
-      coordinate: {
-        latitude: 21.1667,
-        longitude: -90.0333,
-      },
+      coordinate: { latitude: 21.1667, longitude: -90.0333 },
       image: 'https://thediscoverynut.com/wp-content/uploads/2023/04/dji_fly_20230329_133408_488_1681167557967_photo-copy-2.jpg',
     },
   ];
 
-  const navigateToLocation = (index) => {
-    setActiveMarkerIndex(index);
-    
-    const selectedPueblo = pueblosMagicos[index];
-    
+  useEffect(() => {
+    if (activeMarkerIndex === -1) return;
+
+    const selectedPueblo = pueblosMagicos[activeMarkerIndex];
+
     mapRef.current?.animateToRegion({
       latitude: selectedPueblo.coordinate.latitude,
       longitude: selectedPueblo.coordinate.longitude,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     }, 1000);
-    
+
     scrollViewRef.current?.scrollTo({
-      x: index * (CARD_WIDTH + SPACING),
+      x: activeMarkerIndex * (CARD_WIDTH + SPACING),
       animated: true,
     });
+
+  }, [activeMarkerIndex]);
+
+  const handleCardScroll = (index) => {
+    if (index !== activeMarkerIndex) {
+      setActiveMarkerIndex(index);
+    }
+  };
+
+  const handleMarkerPress = (index) => {
+    setActiveMarkerIndex(index);
   };
 
   const navigateToCancun = () => {
     setActiveMarkerIndex(-1);
-    
     mapRef.current?.animateToRegion(initialRegion, 1000);
   };
 
@@ -96,7 +93,6 @@ export default function App() {
         style={styles.map}
         initialRegion={initialRegion}
       >
-        {/* Marcador inicial (UT) */}
         <Marker
           coordinate={initialRegion}
           title="UT Cancún"
@@ -105,7 +101,6 @@ export default function App() {
           onPress={navigateToCancun}
         />
 
-        {/* Marcadores de Pueblos Mágicos */}
         {pueblosMagicos.map((pueblo, index) => (
           <Marker
             key={pueblo.id}
@@ -113,18 +108,15 @@ export default function App() {
             title={pueblo.title}
             description={pueblo.description}
             pinColor={activeMarkerIndex === index ? '#FF0000' : '#3498db'}
-            onPress={() => navigateToLocation(index)}
+            onPress={() => handleMarkerPress(index)}
           />
         ))}
       </MapView>
-      
-      <TouchableOpacity
-        style={styles.cancunButton}
-        onPress={navigateToCancun}
-      >
+
+      <TouchableOpacity style={styles.cancunButton} onPress={navigateToCancun}>
         <Text style={styles.cancunButtonText}>Volver a UT Cancún</Text>
       </TouchableOpacity>
-      
+
       <View style={styles.cardsContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -135,12 +127,8 @@ export default function App() {
           snapToAlignment="center"
           contentContainerStyle={styles.scrollViewContent}
           onMomentumScrollEnd={(event) => {
-            const index = Math.round(
-              event.nativeEvent.contentOffset.x / (CARD_WIDTH + SPACING)
-            );
-            if (index >= 0 && index < pueblosMagicos.length) {
-              navigateToLocation(index);
-            }
+            const index = Math.round(event.nativeEvent.contentOffset.x / (CARD_WIDTH + SPACING));
+            handleCardScroll(index);
           }}
         >
           {pueblosMagicos.map((pueblo, index) => (
@@ -151,20 +139,16 @@ export default function App() {
                 styles.card,
                 activeMarkerIndex === index && styles.activeCard
               ]}
-              onPress={() => navigateToLocation(index)}
+              onPress={() => handleCardScroll(index)}
             >
-              <Image 
-                source={{ uri: pueblo.image }} 
-                style={styles.cardImage} 
-                resizeMode="cover"
-              />
+              <Image source={{ uri: pueblo.image }} style={styles.cardImage} resizeMode="cover" />
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{pueblo.title}</Text>
                 <Text style={styles.cardDescription}>{pueblo.description}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.navigateButton}
                   activeOpacity={0.6}
-                  onPress={() => navigateToLocation(index)}
+                  onPress={() => handleCardScroll(index)}
                 >
                   <Text style={styles.navigateButtonText}>Ver en el mapa</Text>
                 </TouchableOpacity>
