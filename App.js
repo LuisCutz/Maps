@@ -94,16 +94,17 @@ export default function App() {
         initialRegion={initialRegion}
       >
         <Marker
+          key={`ut-marker-${activeMarkerIndex === -1}`}
           coordinate={initialRegion}
           title="UT Cancún"
           description="Universidad Tecnológica de Cancún"
-          pinColor="#1E88E5"
+          pinColor={activeMarkerIndex === -1 ? '#FF0000' : '#1E88E5'}
           onPress={navigateToCancun}
         />
 
         {pueblosMagicos.map((pueblo, index) => (
           <Marker
-            key={pueblo.id}
+            key={`${pueblo.id}-${activeMarkerIndex}`}
             coordinate={pueblo.coordinate}
             title={pueblo.title}
             description={pueblo.description}
