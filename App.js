@@ -52,6 +52,12 @@ export default function App() {
   ];
 
   useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(initialRegion, 1000);
+    }
+  }, []);
+
+  useEffect(() => {
     if (activeMarkerIndex === -1) return;
 
     const selectedPueblo = pueblosMagicos[activeMarkerIndex];
