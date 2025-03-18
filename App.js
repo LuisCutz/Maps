@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -67,21 +67,25 @@ export default function App() {
 
   const navigateToLocation = (index) => {
     const selectedPueblo = pueblosMagicos[index];
-
+    
+    setActiveMarkerIndex(index);
+    
     mapRef.current?.animateToRegion({
       latitude: selectedPueblo.coordinate.latitude,
       longitude: selectedPueblo.coordinate.longitude,
       latitudeDelta: 0.04,
       longitudeDelta: 0.04,
     }, 1000);
-
-    setActiveMarkerIndex(index);
-
+    
     scrollViewRef.current?.scrollTo({
       x: index * (CARD_WIDTH + SPACING),
       animated: true,
     });
   };
+
+  useEffect(() => {
+    setActiveMarkerIndex(0);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -89,9 +93,8 @@ export default function App() {
         ref={mapRef}
         style={styles.map}
         initialRegion={initialRegion}
-        region={region}
-        onRegionChangeComplete={(region) => setRegion(region)}
       >
+        {/* Marcador inicial (Cancún) */}
         {pueblosMagicos.map((pueblo, index) => (
           <Marker
             key={pueblo.id}
@@ -99,10 +102,11 @@ export default function App() {
             title={pueblo.title}
             description={pueblo.description}
             pinColor={index === activeMarkerIndex ? '#FF0000' : '#3498db'}
+            onPress={() => navigateToLocation(index)}
           />
         ))}
       </MapView>
-
+      
       <View style={styles.cardsContainer}>
         <ScrollView
           ref={scrollViewRef}
@@ -113,10 +117,10 @@ export default function App() {
           snapToAlignment="center"
           contentContainerStyle={styles.scrollViewContent}
           onMomentumScrollEnd={(event) => {
-            const index = Math.floor(
+            const index = Math.round(
               event.nativeEvent.contentOffset.x / (CARD_WIDTH + SPACING)
             );
-            if (index !== activeMarkerIndex) {
+            if (index >= 0 && index < pueblosMagicos.length && index !== activeMarkerIndex) {
               navigateToLocation(index);
             }
           }}
@@ -124,6 +128,7 @@ export default function App() {
           {pueblosMagicos.map((pueblo, index) => (
             <TouchableOpacity
               key={pueblo.id}
+              activeOpacity={0.8}
               style={[
                 styles.card,
                 index === activeMarkerIndex && styles.activeCard
@@ -134,9 +139,13 @@ export default function App() {
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{pueblo.title}</Text>
                 <Text style={styles.cardDescription}>{pueblo.description}</Text>
-                <TouchableOpacity
+                <TouchableOpacity 
                   style={styles.navigateButton}
-                  onPress={() => navigateToLocation(index)}
+                  activeOpacity={0.6}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    navigateToLocation(index);
+                  }}
                 >
                   <Text style={styles.navigateButtonText}>Ver en el mapa</Text>
                 </TouchableOpacity>
@@ -183,7 +192,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   activeCard: {
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#FF0000',
   },
   cardImage: {
